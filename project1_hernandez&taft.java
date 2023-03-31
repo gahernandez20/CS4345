@@ -1,3 +1,6 @@
+/*Name: Giovanni Hernandez
+  Name: Fred Taft */
+  
 class SynchedBridge {
     
     static class Eastbound implements Runnable {
