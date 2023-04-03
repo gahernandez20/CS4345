@@ -24,21 +24,15 @@ class SynchedBridge {
             eastboundCars = new ArrayDeque<>();
         }
 
-        public void createRandomCars() {
+        public void createRandomCars() throws InterruptedException{
             Random rand = new Random();
-            
             while(true){
                 int car = rand.nextInt(1, 10000);
                 while (car % 2 == 0) {
                     car = rand.nextInt(1, 10000);
                 }
                 eastboundCars.addLast(car);
-                try {
-                    Thread.sleep(2000);
-                } 
-                catch(InterruptedException ie) {
-                    ie.printStackTrace();
-                }
+                Thread.sleep(2000);
                 System.out.printf("Car %d is passing.\n", car);
             }            
         }
@@ -49,7 +43,12 @@ class SynchedBridge {
         
         @Override
         public void run() {
-            createRandomCars();
+            try {
+                createRandomCars();
+            }
+            catch(InterruptedException ie) {
+                System.out.println(ie);
+            }
         }
 
     }
@@ -61,27 +60,27 @@ class SynchedBridge {
             westboundCars = new ArrayDeque<>();
         }
 
-        public void createRandomCars() {
+        public void createRandomCars() throws InterruptedException {
             Random rand = new Random();
             while(true){
                 int car = rand.nextInt(1, 10000);
                 while (car % 2 != 0) {
                     car = rand.nextInt(1, 10000);
                 }
-                westboundCars.addLast(car);
-                try {
-                    Thread.sleep(2000);
-                } 
-                catch(InterruptedException ie) {
-                    ie.printStackTrace();
-                }
+                westboundCars.addLast(car);       
+                Thread.sleep(2000);
                 System.out.printf("Car %d is passing.\n", car);
             }  
         }
 
         @Override
         public void run() {
-            createRandomCars();
+            try {
+                createRandomCars();
+            }
+            catch(InterruptedException ie) {
+                System.out.println(ie);
+            }
         }
 
     }
