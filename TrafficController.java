@@ -56,7 +56,7 @@ class Direction extends Thread {
                 while (true) {
                     Car c = new Car(eastCarID, rand.nextInt(20));
                     cars.addLast(c);
-                    System.out.printf("Car %d created\n", c.getID());
+                    System.out.printf("Car %d has arrived at bridge\n", c.getID());
                     Thread.sleep(rand.nextInt(5,10)*1000);
                     arrive();
                     eastCarID += 2;
@@ -66,7 +66,7 @@ class Direction extends Thread {
                 while (true) {
                     Car c = new Car(westCarID, rand.nextInt(20));
                     cars.addLast(c);
-                    System.out.printf("Car %d created\n", c.getID());
+                    System.out.printf("Car %d has arrived at bridge\n", c.getID());
                     Thread.sleep(rand.nextInt(5,10)*1000);
                     arrive();
                     westCarID += 2;
