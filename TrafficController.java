@@ -26,7 +26,7 @@ public class TrafficController {
 class Direction extends Thread {
     private Random rand = new Random(); // Random number generator used to create random sleep times
     protected Semaphore s; // Local variable used to store instance of semaphore for each thread
-    protected Deque<Car> cars; // Local deque (queue) used to maintain aisle of cars on both sides of thread
+    protected Deque<Car> cars; // Local deque (queue) used to maintain aisle of cars on both sides of bridge; Each thread has a queue
 
     public Direction(String threadNameDirection, Semaphore s) {
         super(threadNameDirection);
