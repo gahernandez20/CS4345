@@ -70,18 +70,20 @@ class Direction extends Thread {
         s.release();
     }
 
+    // Working thread code; Each thread will infinitely create cars and check 
+    //      if first car in its deque can pass over the bridge
     @Override
     public void run() {
         try {
             if (this.getName().equals("East")) {
-                carID = 1;
-                while (true) {
-                    addMoreCars();
+                carID = 1; // East side cars going west are identified with odd numbers
+                while (true) { // Infinite loop
+                    addMoreCars(); // Calls helper method that contains the working code
                 }
             } else {
-                carID = 2;
-                while (true) {
-                    addMoreCars();
+                carID = 2; // West side cars going east are identified with even numbers
+                while (true) { // Infinite loop
+                    addMoreCars(); // Calls helper method that contains the working code
                 }
             }
         } catch (InterruptedException ie) {
@@ -94,7 +96,7 @@ class Direction extends Thread {
      */
 
     private int createRandomCarSpeed() {
-        return rand.nextInt(20);
+        return rand.nextInt(1,20);
     }
 
     private int createRandomSleepTime() {
