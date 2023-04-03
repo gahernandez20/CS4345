@@ -8,23 +8,25 @@ class Bridge {
     static Car passingCar = null;
 }
 
+// Driver class; creates threads to manage both sides of bridge 
 public class TrafficController {
 
-    static Deque<Car> cars = new ArrayDeque<>();
-    static Semaphore light = new Semaphore(1);
-
     public static void main(String[] args) {
+        // Semaphore used to maintain mutual exclusion
+        Semaphore light = new Semaphore(1);
+
         Direction eastbound = new Direction("East", light);
         Direction westbound = new Direction("West", light);
+
         eastbound.start();
         westbound.start();
     }
 }
 
 class Direction extends Thread {
-    private Random rand = new Random();
-    protected Semaphore s;
-    protected Deque<Car> cars;
+    private Random rand = new Random(); // Random number generator used to create random sleep times
+    protected Semaphore s; // Local variable used to store instance of semaphore for each thread
+    protected Deque<Car> cars; // Local deque (queue) used to maintain aisle of cars on both sides of thread
 
     public Direction(String threadNameDirection, Semaphore s) {
         super(threadNameDirection);
@@ -35,7 +37,7 @@ class Direction extends Thread {
     public void arrive() throws InterruptedException {
         if(s.tryAcquire()) {
             Bridge.passingCar = cars.removeFirst();
-            System.out.printf("Car %d is passing on the bridge.\n", Bridge.passingCar.getID());
+            System.out.printf("Car %d has started passing on the bridge.\n", Bridge.passingCar.getID());
             Thread.sleep(Bridge.passingCar.getSpeed() * 1000);
             passed();
         }
@@ -48,7 +50,6 @@ class Direction extends Thread {
 
     @Override
     public void run() {
-        int i = 0;
         try {
             if (this.getName().equals("East")) {
                 int eastCarID = 1;
@@ -59,7 +60,6 @@ class Direction extends Thread {
                     Thread.sleep(rand.nextInt(5,10)*1000);
                     arrive();
                     eastCarID += 2;
-                    i++;
                 }
             } else {
                 int westCarID = 2;
@@ -70,7 +70,6 @@ class Direction extends Thread {
                     Thread.sleep(rand.nextInt(5,10)*1000);
                     arrive();
                     westCarID += 2;
-                    i++;
                 }
             }
         } catch (InterruptedException ie) {
@@ -80,8 +79,8 @@ class Direction extends Thread {
 }
 
 class Car {
-    protected int id;
-    protected int speed;
+    private int id;
+    private int speed;
 
     public Car(int id, int speed) {
         this.id = id;
