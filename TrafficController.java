@@ -8,21 +8,25 @@ class Bridge {
     static Car passingCar = null;
 }
 
+// Driver class; creates threads to manage both sides of bridge 
 public class TrafficController {
-    static Semaphore light = new Semaphore(1);
 
     public static void main(String[] args) {
+        // Semaphore used to maintain mutual exclusion
+        Semaphore light = new Semaphore(1);
+
         Direction eastbound = new Direction("East", light);
         Direction westbound = new Direction("West", light);
+
         eastbound.start();
         westbound.start();
     }
 }
 
 class Direction extends Thread {
-    private Random rand = new Random();
-    protected Semaphore s;
-    protected Deque<Car> cars;
+    private Random rand = new Random(); // Random number generator used to create random sleep times
+    protected Semaphore s; // Local variable used to store instance of semaphore for each thread
+    protected Deque<Car> cars; // Local deque (queue) used to maintain aisle of cars on both sides of thread
 
     public Direction(String threadNameDirection, Semaphore s) {
         super(threadNameDirection);
