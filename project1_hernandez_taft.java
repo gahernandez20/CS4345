@@ -109,7 +109,7 @@ class Direction extends Thread {
     private void addMoreCars() throws InterruptedException {
         Car c = new Car(carID, createRandomCarSpeed());
         cars.addLast(c);
-        System.out.printf("Car %d has arrived at the bridge and is waiting passage\n", c.getID());
+        System.out.printf("Car %d has arrived at the bridge and is awaiting passage\n", c.getID());
         Thread.sleep(createRandomSleepTime()); 
         arrive(); // Calls arrive() method that checks for bridge's availability
         carID += 2;
