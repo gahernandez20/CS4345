@@ -70,18 +70,20 @@ class Direction extends Thread {
         s.release();
     }
 
+    // Working thread code; Each thread will infinitely create cars and check 
+    //      if first car in its deque can pass over the bridge
     @Override
     public void run() {
         try {
             if (this.getName().equals("East")) {
-                carID = 1;
-                while (true) {
-                    eastSideThread();
+                carID = 1; // East side cars going west are identified with odd numbers
+                while (true) { // Infinite loop
+                    addMoreCars(); // Calls helper method that contains the working code
                 }
             } else {
-                carID = 2;
-                while (true) {
-                    westSideThread();
+                carID = 2; // West side cars going east are identified with even numbers
+                while (true) { // Infinite loop
+                    addMoreCars(); // Calls helper method that contains the working code
                 }
             }
         } catch (InterruptedException ie) {
@@ -94,23 +96,14 @@ class Direction extends Thread {
      */
 
     private int createRandomCarSpeed() {
-        return rand.nextInt(20);
+        return rand.nextInt(1,20);
     }
 
     private int createRandomSleepTime() {
         return rand.nextInt(5, 10) * 1000;
     }
 
-    private void eastSideThread() throws InterruptedException {
-        Car c = new Car(carID, createRandomCarSpeed());
-        cars.addLast(c);
-        System.out.printf("Car %d has arrived at the bridge and is waiting passage\n", c.getID());
-        Thread.sleep(createRandomSleepTime());
-        arrive();
-        carID += 2;
-    }
-
-    private void westSideThread() throws InterruptedException {
+    private void addMoreCars() throws InterruptedException {
         Car c = new Car(carID, createRandomCarSpeed());
         cars.addLast(c);
         System.out.printf("Car %d has arrived at the bridge and is waiting passage\n", c.getID());
