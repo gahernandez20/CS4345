@@ -31,6 +31,7 @@ class BridgeTrafficController {
         Direction eastbound = new Direction("East", light);
         Direction westbound = new Direction("West", light);
 
+        // Starts each thread
         eastbound.start();
         westbound.start();
     }
@@ -38,10 +39,10 @@ class BridgeTrafficController {
 
 class Direction extends Thread {
     private Random rand = new Random(); // Random number generator used to create random sleep times
-    private int carID;
-    protected Semaphore s; // Local variable used to store instance of semaphore for each thread
+    private int carID; // Instance variable used by each thread to create ids for new cars
+    protected Semaphore s; // Instance variable used to store instance of semaphore for each thread
     protected Deque<Car> cars; // Local deque (queue) used to maintain aisle of cars on both sides of bridge;
-                               // Each thread has a queue
+                               // Each thread has a deque (queue)
 
     public Direction(String threadNameDirection, Semaphore s) {
         super(threadNameDirection); // Calls the thread class's constructor
@@ -52,13 +53,14 @@ class Direction extends Thread {
     protected void arrive() throws InterruptedException {
         // arrive() will call tryAcquire(), which will check to see if the semaphore is available; This method is non-blocking,
         //      meaning if the semaphore is not available, the thread will not wait for it to
-        //      be available and will instead continue back to the while-loop that will create additional cars
+        //      become available and will instead continue back to the infinite while-loop that will create additional cars
         if (s.tryAcquire()) {
             // If the semaphore is available, the current thread will acquire it and move
             //      first car in its deque onto the bridge
             Bridge.passingCar = cars.removeFirst();
             System.out.printf("Car %d has started passing on the bridge.\n", Bridge.passingCar.getID());
-            Thread.sleep(Bridge.passingCar.getSpeed() * 1000); // This simulates the car taking its time passing over the bridge
+            Thread.sleep(Bridge.passingCar.getSpeed() * 1000); // This simulates the car taking its time passing over the bridge;
+                                                               // Multiplied by 1000 to convert millisecondds to seconds
             passed(); // After car has passed, passed() is called
         }
     }
@@ -70,21 +72,23 @@ class Direction extends Thread {
         s.release();
     }
 
+    // Working thread code; Each thread will infinitely create cars and check 
+    //      if first car in its deque can pass over the bridge
     @Override
     public void run() {
         try {
-            if (this.getName().equals("East")) {
-                carID = 1;
-                while (true) {
-                    eastSideThread();
+            if (this.getName().equals("East")) { // East side thread code block 
+                carID = 1; // East side cars going west are identified with odd numbers
+                while (true) { // Infinite loop
+                    addMoreCars(); // Calls helper method that contains the working code
                 }
-            } else {
-                carID = 2;
-                while (true) {
-                    westSideThread();
+            } else { // West side thread code block
+                carID = 2; // West side cars going east are identified with even numbers
+                while (true) { // Infinite loop
+                    addMoreCars(); // Calls helper method that contains the working code
                 }
             }
-        } catch (InterruptedException ie) {
+        } catch (InterruptedException ie) { // Multiple methods throw Interrupted Exception; this single catch block catches all
             ie.printStackTrace();
         }
     }
@@ -94,32 +98,25 @@ class Direction extends Thread {
      */
 
     private int createRandomCarSpeed() {
-        return rand.nextInt(20);
+        return rand.nextInt(1,20);
     }
 
     private int createRandomSleepTime() {
-        return rand.nextInt(5, 10) * 1000;
+        return rand.nextInt(5, 10) * 1000; // Multiplied by 1000 to convert 5-10 milliseconds to 5-10 seconds
     }
 
-    private void eastSideThread() throws InterruptedException {
+    // Helper method that each thread calls; Creates new cars and calls arrive() after each car 'arrives' at bridge
+    private void addMoreCars() throws InterruptedException {
         Car c = new Car(carID, createRandomCarSpeed());
         cars.addLast(c);
         System.out.printf("Car %d has arrived at the bridge and is waiting passage\n", c.getID());
-        Thread.sleep(createRandomSleepTime());
-        arrive();
-        carID += 2;
-    }
-
-    private void westSideThread() throws InterruptedException {
-        Car c = new Car(carID, createRandomCarSpeed());
-        cars.addLast(c);
-        System.out.printf("Car %d has arrived at the bridge and is waiting passage\n", c.getID());
-        Thread.sleep(createRandomSleepTime());
-        arrive();
+        Thread.sleep(createRandomSleepTime()); 
+        arrive(); // Calls arrive() method that checks for bridge's availability
         carID += 2;
     }
 }
 
+// Car object class
 class Car {
     private int id;
     private int speed;
