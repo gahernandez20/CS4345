@@ -76,12 +76,12 @@ class Direction extends Thread {
             if (this.getName().equals("East")) {
                 carID = 1;
                 while (true) {
-                    eastSideThread();
+                    addMoreCars();
                 }
             } else {
                 carID = 2;
                 while (true) {
-                    westSideThread();
+                    addMoreCars();
                 }
             }
         } catch (InterruptedException ie) {
@@ -101,16 +101,7 @@ class Direction extends Thread {
         return rand.nextInt(5, 10) * 1000;
     }
 
-    private void eastSideThread() throws InterruptedException {
-        Car c = new Car(carID, createRandomCarSpeed());
-        cars.addLast(c);
-        System.out.printf("Car %d has arrived at the bridge and is waiting passage\n", c.getID());
-        Thread.sleep(createRandomSleepTime());
-        arrive();
-        carID += 2;
-    }
-
-    private void westSideThread() throws InterruptedException {
+    private void addMoreCars() throws InterruptedException {
         Car c = new Car(carID, createRandomCarSpeed());
         cars.addLast(c);
         System.out.printf("Car %d has arrived at the bridge and is waiting passage\n", c.getID());
