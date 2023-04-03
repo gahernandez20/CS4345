@@ -9,8 +9,6 @@ class Bridge {
 }
 
 public class TrafficController {
-
-    static Deque<Car> cars = new ArrayDeque<>();
     static Semaphore light = new Semaphore(1);
 
     public static void main(String[] args) {
