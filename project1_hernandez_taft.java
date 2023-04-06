@@ -54,21 +54,32 @@ class Direction extends Thread {
         // arrive() will call tryAcquire(), which will check to see if the semaphore is available; This method is non-blocking,
         //      meaning if the semaphore is not available, the thread will not wait for it to
         //      become available and will instead continue back to the infinite while-loop that will create additional cars
-        if (s.tryAcquire()) {
+        if (cars.size()>1) {
+            if (s.tryAcquire()) {
+                allowCarsThrough();
+                passed(); // After cars has passed, passed() is called
+            }
+        }
+    }
+
+    protected void allowCarsThrough() throws InterruptedException{
+        int numOfCarsAllowedThrough = rand.nextInt(1,cars.size()); // Simulates the duration of the green light for a side of the bridge
+                                                                          // Allows n amount of cars to pass over bridge
+                                                                          // Capped at deque's max capacity to prevent ArrayIndexOutOfBoundsException
+        System.out.println("Light is green for " + this.getName() + " side.");
+        for(int i=0; i<numOfCarsAllowedThrough; i++) {
             // If the semaphore is available, the current thread will acquire it and move
             //      first car in its deque onto the bridge
             Bridge.passingCar = cars.removeFirst();
             System.out.printf("Car %d has started passing on the bridge.\n", Bridge.passingCar.getID());
             Thread.sleep(Bridge.passingCar.getSpeed() * 1000); // This simulates the car taking its time passing over the bridge;
                                                                // Multiplied by 1000 to convert millisecondds to seconds
-            passed(); // After car has passed, passed() is called
+            System.out.printf("Car %d has finished passing the bridge.\n", Bridge.passingCar.getID());
         }
     }
 
     protected void passed() {
-        // passed() declares the car as finished passing the bridge and releases the
-        //      semaphore to be acquired by any thread
-        System.out.printf("Car %d has finished passing the bridge.\n", Bridge.passingCar.getID());
+        // passed() releases the semaphore to be acquired by any thread
         s.release();
     }
 
@@ -98,11 +109,12 @@ class Direction extends Thread {
      */
 
     private int createRandomCarSpeed() {
-        return rand.nextInt(1,20);
+        return rand.nextInt(2,15);
     }
 
+    // Used to delay creation of more cars; Stimulates time taken for cars to arrive to side of bridge
     private int createRandomSleepTime() {
-        return rand.nextInt(5, 10) * 1000; // Multiplied by 1000 to convert 5-10 milliseconds to 5-10 seconds
+        return rand.nextInt(2, 15) * 1000; // Multiplied by 1000 to convert 5-10 milliseconds to 5-10 seconds
     }
 
     // Helper method that each thread calls; Creates new cars and calls arrive() after each car 'arrives' at bridge
