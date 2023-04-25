@@ -18,13 +18,14 @@ class Client {
             // create a socket to make connection to server socket
             sock = new Socket("127.0.0.1", port);
 
-            // create an output stream to send data to the server (Hint: DataOutPutStream)
+            // create an output stream to send data to the server for a client
             outputToServer = new DataOutputStream(sock.getOutputStream());
             // create an input stream to receive data from server
             inputFromServer = new DataInputStream(sock.getInputStream());
 
+            // Creates the GUI
             gui = new GUI();
-            addLogInButtonListener();
+            addLogInButtonListener(); // Used to add event handler for button
 
         } catch (IOException ioe) {
             System.err.println(ioe);
@@ -45,7 +46,6 @@ class Client {
                     System.out.println(message);
                     EventQueue.invokeLater(new Runnable() {
                         public void run() {
-                            // your code to update the GUI here
                             gui.groupChat.append(message + "\n");
                         }
                     });
@@ -75,7 +75,8 @@ class Client {
                     String connectionMsg = String.format("Connection started (Port %d).\n", port);
                     gui.groupChat.append(connectionMsg + "\n");
                     outputToServer.writeUTF(username + " has entered the chat.\n");
-                    gui.groupChat.append(username + " has entered the chat.\n");
+                    outputToServer.flush();
+                    gui.groupChat.append("You entered the chat on" + new Date() + ".\n");
                 }
                 catch (IOException ioException) {
                     System.err.println(ioException);
@@ -90,6 +91,8 @@ class Client {
                 try {
                     String msg = gui.userMessage.getText();
                     if (msg.toLowerCase().equals("exit")) {
+                        outputToServer.writeUTF(username + " has left the server.");
+                        outputToServer.flush();
                         gui.groupChat.append("Closing connection to server...");
                         Thread.sleep(2000);
                         sock.close(); // closing the socket at client
@@ -97,9 +100,9 @@ class Client {
                     }
                     // send the data to the server
                     outputToServer.writeUTF(username + ": " + msg);
-                    gui.groupChat.append(username + ": " + msg + "\n");
-                    gui.groupChat.append("(Message sent at " + new Date() + ")\n");
                     outputToServer.flush(); // clean the client side sending port
+                    gui.groupChat.append("You: " + msg + "\n");
+                    gui.groupChat.append("(Message sent at " + new Date() + ")\n");
                     clearText();
                 }
                 catch (IOException ioException) {
