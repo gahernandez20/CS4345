@@ -5,14 +5,16 @@ import java.awt.*;
 import java.awt.event.*;
 
 class Client {
+    static String username;
     static Socket sock;
+    static int port;
     static DataOutputStream outputToServer;
     static DataInputStream inputFromServer;
     static GUI gui;
 
     public static void main(String[] args) {
         try {
-            int port = 6001;
+            port = 6001;
             // create a socket to make connection to server socket
             sock = new Socket("127.0.0.1", port);
 
@@ -22,19 +24,64 @@ class Client {
             inputFromServer = new DataInputStream(sock.getInputStream());
 
             gui = new GUI();
-            addButtonListener();
+            addLogInButtonListener();
 
-            // Signal start of connection with server
-            gui.groupChat.append("Connecting to server...\n");
-            String connectionMsg = String.format("Connection started (Port %d).\n", port);
-            gui.groupChat.append(connectionMsg);
-
-            // receive the result from the server
-            String answer = inputFromServer.readUTF();
-            System.out.println(answer); 
         } catch (IOException ioe) {
             System.err.println(ioe);
         }
+    }
+
+    private static class ReceiveThread implements Runnable {
+        private DataInputStream inputStream;
+
+        public ReceiveThread(DataInputStream inputStream) {
+            this.inputStream = inputStream;
+        }
+
+        public void run() {
+            while (true) {
+                try {
+                    String message = inputStream.readUTF();
+                    System.out.println(message);
+                    EventQueue.invokeLater(new Runnable() {
+                        public void run() {
+                            // your code to update the GUI here
+                            gui.groupChat.append(message + "\n");
+                        }
+                    });
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                    break;
+                }
+            }
+        }
+    }
+
+    private static void addLogInButtonListener() {
+        gui.logInButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                try {
+                    username = gui.usrname.getText();
+                    gui.usrname.setText(null);
+                    gui.createMainGUI();
+                    addButtonListener();
+
+                    // Once main gui is created, creates a thread that listens for incoming messages
+                    Thread receivingThread = new Thread(new ReceiveThread(inputFromServer));
+                    receivingThread.start();
+                
+                    // Signal start of connection with server
+                    gui.groupChat.append("Connecting to server...\n");
+                    String connectionMsg = String.format("Connection started (Port %d).\n", port);
+                    gui.groupChat.append(connectionMsg + "\n");
+                    outputToServer.writeUTF(username + " has entered the chat.\n");
+                    gui.groupChat.append(username + " has entered the chat.\n");
+                }
+                catch (IOException ioException) {
+                    System.err.println(ioException);
+                }
+            }
+        });
     }
 
     private static void addButtonListener() {
@@ -49,10 +96,10 @@ class Client {
                         System.exit(0);
                     }
                     // send the data to the server
-                    outputToServer.writeUTF(msg);
-                    System.out.println("Data sent to server at " + new Date() + '\n');
+                    outputToServer.writeUTF(username + ": " + msg);
+                    gui.groupChat.append(username + ": " + msg + "\n");
+                    gui.groupChat.append("(Message sent at " + new Date() + ")\n");
                     outputToServer.flush(); // clean the client side sending port
-                    gui.groupChat.append(msg);
                     clearText();
                 }
                 catch (IOException ioException) {
@@ -72,17 +119,56 @@ class Client {
 }
 
 class GUI {
-    TextField userMessage, tf2;
+    TextField userMessage, tf2, usrname;
     TextArea groupChat;
-    Label lbl1, lbl2;
-    Button submitButton;
+    Label lbl1, lbl2, logIn;
+    Button logInButton, submitButton;
     Frame frame;
 
     public GUI() {
+        createInitialPage();
+    }
+    private void createInitialPage() {
+        frame = new Frame("Messaging Program");
+        logIn = new Label("Enter your username: ");
+        usrname = new TextField(40);
+        logInButton = new Button("Log In");
+
+        usrname.requestFocus();
+
+        frame.setLayout(null);
+        createPositionsForLogInComponents();
+        addLogInComponentsToGUI();
+
+        // Ensures window opened is closed when red X is pressed
+        frame.addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent we) {
+                System.exit(0);
+            }
+        });
+
+        // Displays GUI
+        frame.setSize(600, 400);
+        frame.setVisible(true);
+    }
+
+    private void createPositionsForLogInComponents() {
+        logIn.setBounds(20, 150, 150, 30);
+        usrname.setBounds(175, 150, 150, 30);
+        logInButton.setBounds(325, 150, 120, 30);
+    }
+
+    private void addLogInComponentsToGUI() {
+        frame.add(logIn);
+        frame.add(usrname);
+        frame.add(logInButton);
+    }
+
+    public void createMainGUI() {
         // Initialize GUI variables
+        frame.removeAll();
         groupChat = new TextArea();
         groupChat.setEditable(false);
-        frame = new Frame("Messaging Program");
         userMessage = new TextField(40);
         userMessage.requestFocus();
         tf2 = new TextField(40);
@@ -95,17 +181,6 @@ class GUI {
         frame.setLayout(null);
         createPositionsForComponents();
         addComponentsToGUI();
-
-        // Ensures window opened is closed when red X is pressed
-        frame.addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent we) {
-                System.exit(0);
-            }
-        });
-
-        // Displays GUI
-        frame.setSize(600, 400);
-        frame.setVisible(true);
     }
 
     // Method that will size the components of GUI and set their positions

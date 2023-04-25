@@ -3,34 +3,53 @@ import java.io.*;
 import java.util.*;
 
 class Server {
+    // Static variables needed to start the server
+    static ServerSocket serverSocket;
+    static final int port = 6001; // Random port number is selected.
     public static void main(String[] args) {
-        try {
-            int port = 6001;
-            // create a server socket
-            ServerSocket servSock = new ServerSocket( port );
-            Scanner scnr = new Scanner(System.in);
+        try {  
+            serverSocket = new ServerSocket( port );
             System.out.println("Server started at "+ new Date() + '\n');
+
+            Socket client = serverSocket.accept();
+            DataInputStream inputFromClient = new DataInputStream( client.getInputStream() );
+            DataOutputStream outputToClient = new DataOutputStream( client.getOutputStream() );
+
+            Socket client2 = serverSocket.accept();
+            DataInputStream inputFromClient2 = new DataInputStream( client2.getInputStream() );
+            DataOutputStream outputToClient2 = new DataOutputStream( client2.getOutputStream() );
             
-            // Listen for a connection request
-            Socket client = servSock.accept();
-            
-            while(!client.isClosed()) {
-                // create data input and data output streams
-                DataInputStream inputFromClient = new DataInputStream( client.getInputStream() );
-                DataOutputStream outputToClient = new DataOutputStream( client.getOutputStream() );
-    
-                String receivedMsg = inputFromClient.readUTF();
-    
-                outputToClient.writeUTF(receivedMsg);
+            while(true) {
+                if(client.isClosed() && client2.isClosed()) {
+                    System.out.println("No clients exists.");
+                    break;
+                }
+
+                String message = inputFromClient.readUTF();
+                System.out.println(message);
+
+                outputToClient2.writeUTF(message);
+                outputToClient2.flush();
+
+                message = inputFromClient2.readUTF();
+                System.out.println(message);
+
+                outputToClient.writeUTF(message);
+                outputToClient.flush();
             }
-            System.out.println("No clients are connected. Closing server.");
-            // closing the socket at server
-            scnr.close();
-            client.close();
-            servSock.close();
+
         }
-        catch (IOException ioe) {
-            System.err.println(ioe);
+        catch(IOException ioException) {
+            System.err.println(ioException);
+        }
+        finally {
+            try {
+                serverSocket.close();
+            }
+            catch (IOException ioException){ 
+                System.err.println(ioException);
+            }
         }
     }
 }
+
