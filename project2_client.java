@@ -6,6 +6,7 @@ import java.awt.event.*;
 
 class Client {
     static String username;
+    static String socketID;
     static Socket sock;
     static final int port = 6001;
     static DataOutputStream outputToServer;
@@ -15,20 +16,22 @@ class Client {
     public static void main(String[] args) {
         try {
             // create a socket to make connection to server socket
-            sock = new Socket("127.0.0.1", port);
+            sock = new ClientSocket("127.0.0.1", port);
 
             // create an output stream to send data to the server for a client
             outputToServer = new DataOutputStream(sock.getOutputStream());
+            outputToServer.flush();
+
             // create an input stream to receive data from server
             inputFromServer = new DataInputStream(sock.getInputStream());
 
-            // Creates the GUI
-            gui = new GUI();
-            addLogInButtonListener(); // Used to add event handler for button
-
-        } catch (IOException ioe) {
-            System.err.println(ioe);
+        } catch (IOException ioException) {
+            System.out.println("Error connecting to server");
         }
+
+        // Creates the GUI
+        gui = new GUI();
+        addLogInButtonListener(); // Used to add event handler for button
     }
 
     private static class ReceiveThread implements Runnable {
@@ -61,9 +64,12 @@ class Client {
             public void actionPerformed(ActionEvent ae) {
                 try {
                     username = gui.usrname.getText();
+                    ((ClientSocket)sock).setUsername(username);
                     gui.usrname.setText(null);
                     gui.createMainGUI();
-                    addButtonListener();
+                    
+                    addButtonListenerToSendGeneralChat();
+                    addButtonListenerToSendPersonalMessage();
 
                     // Once main gui is created, creates a thread that listens for incoming messages
                     Thread receivingThread = new Thread(new ReceiveThread(inputFromServer));
@@ -78,7 +84,7 @@ class Client {
         });
     }
 
-    private static void addButtonListener() {
+    private static void addButtonListenerToSendGeneralChat() {
         gui.submitButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
                 try {
@@ -94,10 +100,27 @@ class Client {
         });
     }
 
+    private static void addButtonListenerToSendPersonalMessage() {
+        gui.sendPMButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                try {
+                    String targetUser = gui.tf2.getText();
+                    String personalMsg = gui.pmBox.getText();
+                    String msg = targetUser + "%" + personalMsg;
+
+                    sendMessageToServer(msg);
+                } catch (IOException ioException) {
+                    System.out.println("Error sending personal message to server for processing");
+                }
+            }
+        });
+    }
+
     private static void startConnection() throws IOException {
         gui.groupChat.append("Connecting to server...\n");
         String connectionMsg = String.format("Connection started (Port %d).\n", port);
         gui.groupChat.append(connectionMsg + "\n");
+        System.out.println("Socket address: " + sock.getLocalSocketAddress().toString());
         outputToServer.writeUTF(username + " has entered the chat.\n");
         outputToServer.flush();
         gui.groupChat.append("You entered the chat on " + new Date() + ".\n");
@@ -135,14 +158,36 @@ class Client {
 
     private static void clearText() {
         gui.userMessage.setText("");
+        gui.tf2.setText("@");
         gui.pmBox.setText("");
+    }
+
+    private static class ClientSocket extends Socket {
+        private String username;
+
+        public ClientSocket(String host, int port, String username) throws UnknownHostException, IOException {
+            super(host, port);
+            this.username = username;
+        }
+
+        public ClientSocket(String host, int port) throws UnknownHostException, IOException {
+            this(host, port, null);
+        }
+
+        public String getUsername() {
+            return this.username;
+        }
+
+        public void setUsername(String username) {
+            this.username = username;
+        }
     }
 }
 
 class GUI {
     TextField userMessage, tf2, pmBox, usrname;
-    TextArea groupChat, personalMessageChat;
-    Label lbl1, lbl2, lbl3, logIn;
+    TextArea groupChat, activeUsers;
+    Label lbl1, lbl2, lbl3, logIn, activeUserLabel;
     Button logInButton, submitButton, sendPMButton;
     Frame frame;
 
@@ -189,47 +234,57 @@ class GUI {
     public void createMainGUI() {
         // Initialize GUI variables
         frame.removeAll();
+
         groupChat = new TextArea();
         groupChat.setEditable(false);
+
+        lbl1 = new Label("Type your message here: ");
         userMessage = new TextField(40);
         userMessage.requestFocus();
-        tf2 = new TextField(40);
-        pmBox = new TextField();
-        tf2.setText("@");
-        lbl1 = new Label("Type your message here: ");
-        lbl2 = new Label("Send a personal message: ");
-        sendPMButton = new Button("Send");
         submitButton = new Button("Send");
+
+        lbl2 = new Label("Send a personal message: ");
+        tf2 = new TextField(40);
+        tf2.setText("@");
+        pmBox = new TextField();
+        sendPMButton = new Button("Send");
+
+        activeUserLabel = new Label("Current active users");
+        activeUsers = new TextArea();
+        activeUsers.setEditable(false);
 
         // Create elements of GUI
         frame.setLayout(null);
-        frame.setSize(700,600);
+        frame.setSize(700, 600);
         createPositionsForComponents();
         addComponentsToGUI();
     }
 
     // Method that will size the components of GUI and set their positions
     private void createPositionsForComponents() {
+        groupChat.setBounds(20, 40, 650, 200);
 
-        groupChat.setBounds(20, 40, 600, 150);
         lbl1.setBounds(20, 300, 200, 30);
         userMessage.setBounds(225, 300, 255, 30);
+        submitButton.setBounds(485, 300, 120, 30);
+
         lbl2.setBounds(20, 340, 200, 30);
         tf2.setBounds(225, 340, 100, 30);
-        pmBox.setBounds(330,340,150,30);
-        submitButton.setBounds(485, 300, 120, 30);
+        pmBox.setBounds(330, 340, 150, 30);
         sendPMButton.setBounds(485, 340, 120, 30);
     }
 
     // Method that will add all components to GUI
     private void addComponentsToGUI() {
         frame.add(groupChat);
+
         frame.add(lbl1);
         frame.add(userMessage);
+        frame.add(submitButton);
+
         frame.add(lbl2);
         frame.add(tf2);
         frame.add(pmBox);
-        frame.add(submitButton);
         frame.add(sendPMButton);
     }
 }
