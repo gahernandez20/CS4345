@@ -7,14 +7,13 @@ import java.awt.event.*;
 class Client {
     static String username;
     static Socket sock;
-    static int port;
+    static final int port = 6001;
     static DataOutputStream outputToServer;
     static DataInputStream inputFromServer;
     static GUI gui;
 
     public static void main(String[] args) {
         try {
-            port = 6001;
             // create a socket to make connection to server socket
             sock = new Socket("127.0.0.1", port);
 
@@ -69,17 +68,11 @@ class Client {
                     // Once main gui is created, creates a thread that listens for incoming messages
                     Thread receivingThread = new Thread(new ReceiveThread(inputFromServer));
                     receivingThread.start();
-                
+
                     // Signal start of connection with server
-                    gui.groupChat.append("Connecting to server...\n");
-                    String connectionMsg = String.format("Connection started (Port %d).\n", port);
-                    gui.groupChat.append(connectionMsg + "\n");
-                    outputToServer.writeUTF(username + " has entered the chat.\n");
-                    outputToServer.flush();
-                    gui.groupChat.append("You entered the chat on" + new Date() + ".\n");
-                }
-                catch (IOException ioException) {
-                    System.err.println(ioException);
+                    startConnection();
+                } catch (IOException ioException) {
+                    ioException.printStackTrace();
                 }
             }
         });
@@ -91,46 +84,72 @@ class Client {
                 try {
                     String msg = gui.userMessage.getText();
                     if (msg.toLowerCase().equals("exit")) {
-                        outputToServer.writeUTF(username + " has left the server.");
-                        outputToServer.flush();
-                        gui.groupChat.append("Closing connection to server...");
-                        Thread.sleep(2000);
-                        sock.close(); // closing the socket at client
-                        System.exit(0);
+                        stopConnection();
                     }
-                    // send the data to the server
-                    outputToServer.writeUTF(username + ": " + msg);
-                    outputToServer.flush(); // clean the client side sending port
-                    gui.groupChat.append("You: " + msg + "\n");
-                    gui.groupChat.append("(Message sent at " + new Date() + ")\n");
-                    clearText();
-                }
-                catch (IOException ioException) {
+                    sendMessageToServer(msg);
+                } catch (IOException ioException) {
                     System.err.println(ioException);
-                }
-                catch (InterruptedException ie) {
-                    System.err.println(ie);
                 }
             }
         });
     }
 
+    private static void startConnection() throws IOException {
+        gui.groupChat.append("Connecting to server...\n");
+        String connectionMsg = String.format("Connection started (Port %d).\n", port);
+        gui.groupChat.append(connectionMsg + "\n");
+        outputToServer.writeUTF(username + " has entered the chat.\n");
+        outputToServer.flush();
+        gui.groupChat.append("You entered the chat on " + new Date() + ".\n");
+    }
+
+    public static void stopConnection() {
+        try {
+            gui.groupChat.append("Closing connection to server...");
+            Thread.sleep(1500);
+            outputToServer.writeUTF(username + " has left the server.");
+            outputToServer.flush();
+            inputFromServer.close(); // Close input stream
+            outputToServer.close(); // Close output stream
+            sock.close(); // closing the socket at client
+            System.exit(0);
+        } catch (IOException ioException) {
+            System.out.println("Error closing connection");
+            System.err.println(ioException);
+        } catch (InterruptedException iException) {
+            System.out.println("Error with thread");
+            System.err.println(iException);
+        }
+
+    }
+
+    private static void sendMessageToServer(String msg) throws IOException {
+        // send the data to the server
+        outputToServer.writeUTF(username + ": " + msg);
+        outputToServer.flush(); // clean the client side sending port
+        // Appends message to the global chat textfield
+        gui.groupChat.append("You: " + msg + "\n");
+        gui.groupChat.append("(Message sent at " + new Date() + ")\n");
+        clearText();
+    }
+
     private static void clearText() {
         gui.userMessage.setText("");
-        gui.tf2.setText("");
+        gui.pmBox.setText("");
     }
 }
 
 class GUI {
-    TextField userMessage, tf2, usrname;
-    TextArea groupChat;
-    Label lbl1, lbl2, logIn;
-    Button logInButton, submitButton;
+    TextField userMessage, tf2, pmBox, usrname;
+    TextArea groupChat, personalMessageChat;
+    Label lbl1, lbl2, lbl3, logIn;
+    Button logInButton, submitButton, sendPMButton;
     Frame frame;
 
     public GUI() {
         createInitialPage();
     }
+
     private void createInitialPage() {
         frame = new Frame("Messaging Program");
         logIn = new Label("Enter your username: ");
@@ -146,7 +165,7 @@ class GUI {
         // Ensures window opened is closed when red X is pressed
         frame.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent we) {
-                System.exit(0);
+                Client.stopConnection();
             }
         });
 
@@ -156,9 +175,9 @@ class GUI {
     }
 
     private void createPositionsForLogInComponents() {
-        logIn.setBounds(20, 150, 150, 30);
-        usrname.setBounds(175, 150, 150, 30);
-        logInButton.setBounds(325, 150, 120, 30);
+        logIn.setBounds(80, 185, 150, 30);
+        usrname.setBounds(240, 185, 150, 30);
+        logInButton.setBounds(400, 185, 120, 30);
     }
 
     private void addLogInComponentsToGUI() {
@@ -175,13 +194,16 @@ class GUI {
         userMessage = new TextField(40);
         userMessage.requestFocus();
         tf2 = new TextField(40);
+        pmBox = new TextField();
+        tf2.setText("@");
         lbl1 = new Label("Type your message here: ");
-        lbl2 = new Label("Your personal messages: ");
-
+        lbl2 = new Label("Send a personal message: ");
+        sendPMButton = new Button("Send");
         submitButton = new Button("Send");
 
         // Create elements of GUI
         frame.setLayout(null);
+        frame.setSize(700,600);
         createPositionsForComponents();
         addComponentsToGUI();
     }
@@ -189,13 +211,14 @@ class GUI {
     // Method that will size the components of GUI and set their positions
     private void createPositionsForComponents() {
 
-        groupChat.setBounds(20, 40, 500, 150);
+        groupChat.setBounds(20, 40, 600, 150);
         lbl1.setBounds(20, 300, 200, 30);
-        userMessage.setBounds(225, 300, 150, 30);
+        userMessage.setBounds(225, 300, 255, 30);
         lbl2.setBounds(20, 340, 200, 30);
-        tf2.setBounds(225, 340, 150, 30);
-        submitButton.setBounds(380, 300, 120, 30);
-
+        tf2.setBounds(225, 340, 100, 30);
+        pmBox.setBounds(330,340,150,30);
+        submitButton.setBounds(485, 300, 120, 30);
+        sendPMButton.setBounds(485, 340, 120, 30);
     }
 
     // Method that will add all components to GUI
@@ -205,6 +228,8 @@ class GUI {
         frame.add(userMessage);
         frame.add(lbl2);
         frame.add(tf2);
+        frame.add(pmBox);
         frame.add(submitButton);
+        frame.add(sendPMButton);
     }
 }
