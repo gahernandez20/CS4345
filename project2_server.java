@@ -13,7 +13,7 @@ class Server {
             serverSocket = new ServerSocket(port);
             System.out.println("Server started at " + new Date() + '\n');
 
-            while(true) {
+            while (true) {
                 removeClosedConnections();
 
                 Socket socket = serverSocket.accept();
@@ -33,11 +33,12 @@ class Server {
             }
         }
     }
+
     private static void removeClosedConnections() throws IOException {
         Iterator<ClientHandler> iter = clients.iterator();
-        while(iter.hasNext()) {
+        while (iter.hasNext()) {
             ClientHandler client = iter.next();
-            if(client.getSocket().isClosed()) {
+            if (client.getSocket().isClosed()) {
                 client.getInputStream().close();
                 client.getOutputStream().close();
                 iter.remove();
@@ -46,11 +47,10 @@ class Server {
     }
 
     public static void broadcastMessage(String msg, ClientHandler currentClientHandler) {
-        System.out.println(msg);
         try {
             removeClosedConnections();
             for (ClientHandler client : clients) {
-                if(!client.equals(currentClientHandler)) {
+                if (!client.equals(currentClientHandler)) {
                     client.sendMessage(msg);
                 }
             }
@@ -66,7 +66,7 @@ class Server {
         private DataInputStream inputStream;
         private DataOutputStream outputStream;
 
-        public ClientHandler (Socket socket) throws IOException {
+        public ClientHandler(Socket socket) throws IOException {
             this.socket = socket;
             this.inputStream = new DataInputStream(socket.getInputStream());
             this.outputStream = new DataOutputStream(socket.getOutputStream());
@@ -88,8 +88,7 @@ class Server {
             try {
                 outputStream.writeUTF(msg);
                 outputStream.flush();
-            }
-            catch(IOException ioException) {
+            } catch (IOException ioException) {
                 System.out.println("Error sending message to a client, presumably closed");
                 try {
                     this.getSocket().close();
@@ -103,7 +102,8 @@ class Server {
             try {
                 while (true) {
                     String msg = inputStream.readUTF();
-                    broadcastMessage(msg, this); 
+                    System.out.println(msg);
+                    broadcastMessage(msg, this);
                 }
             } catch (IOException ioException) {
                 System.out.println("Error in reading message from client ");
