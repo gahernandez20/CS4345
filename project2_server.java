@@ -14,18 +14,31 @@ class Server {
             System.out.println("Server started at " + new Date() + '\n');
 
             while(true) {
+                removeClosedConnections();
+
                 Socket socket = serverSocket.accept();
                 ClientHandler client = new ClientHandler(socket);
-                clients.add(client);
                 client.start();
+                clients.add(client);
             }
         } catch (IOException ioException) {
+            System.out.println("Error creating client handler");
             System.err.println(ioException);
         } finally {
             try {
                 serverSocket.close();
             } catch (IOException ioException) {
+                System.out.println("Error closing server");
                 System.err.println(ioException);
+            }
+        }
+    }
+    private static void removeClosedConnections() {
+        Iterator<ClientHandler> iter = clients.iterator();
+        while(iter.hasNext()) {
+            ClientHandler client = iter.next();
+            if(client.getSocket().isClosed()) {
+                iter.remove();
             }
         }
     }
@@ -33,12 +46,14 @@ class Server {
     public static void broadcastMessage(String msg, ClientHandler currentClientHandler) {
         System.out.println(msg);
         try {
+            removeClosedConnections();
             for (ClientHandler client : clients) {
                 if(!client.equals(currentClientHandler)) {
                     client.sendMessage(msg);
                 }
             }
         } catch (IOException ioException) {
+            System.out.println("Error sending message to other clients");
             System.err.println(ioException);
         }
     }
@@ -71,6 +86,7 @@ class Server {
                     broadcastMessage(msg, this); 
                 }
             } catch (IOException ioException) {
+                System.out.println("Error in reading message from client ");
                 System.err.println(ioException);
             }
         }
