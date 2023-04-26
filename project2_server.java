@@ -84,9 +84,19 @@ class Server {
             return this.outputStream;
         }
 
-        public void sendMessage(String msg) throws IOException {
-            outputStream.writeUTF(msg);
-            outputStream.flush();
+        public void sendMessage(String msg) {
+            try {
+                outputStream.writeUTF(msg);
+                outputStream.flush();
+            }
+            catch(IOException ioException) {
+                System.out.println("Error sending message to a client, presumably closed");
+                try {
+                    this.getSocket().close();
+                } catch (IOException ioException2) {
+                    System.out.println("Error closing client on server end");
+                }
+            }
         }
 
         public void run() {
