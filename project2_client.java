@@ -72,7 +72,7 @@ class Client {
                     // Signal start of connection with server
                     startConnection();
                 } catch (IOException ioException) {
-                    System.err.println(ioException);
+                    ioException.printStackTrace();
                 }
             }
         });

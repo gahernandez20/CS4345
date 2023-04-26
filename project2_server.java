@@ -33,11 +33,13 @@ class Server {
             }
         }
     }
-    private static void removeClosedConnections() {
+    private static void removeClosedConnections() throws IOException {
         Iterator<ClientHandler> iter = clients.iterator();
         while(iter.hasNext()) {
             ClientHandler client = iter.next();
             if(client.getSocket().isClosed()) {
+                client.getInputStream().close();
+                client.getOutputStream().close();
                 iter.remove();
             }
         }
@@ -54,7 +56,7 @@ class Server {
             }
         } catch (IOException ioException) {
             System.out.println("Error sending message to other clients");
-            System.err.println(ioException);
+            ioException.printStackTrace();
         }
     }
 
@@ -72,6 +74,14 @@ class Server {
 
         public Socket getSocket() {
             return this.socket;
+        }
+
+        public DataInputStream getInputStream() {
+            return this.inputStream;
+        }
+
+        public DataOutputStream getOutputStream() {
+            return this.outputStream;
         }
 
         public void sendMessage(String msg) throws IOException {
