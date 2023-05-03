@@ -101,10 +101,8 @@ public class TestClient {
         // Method that runs when thread is started
         public void run() {
             try {
-                String firstMsg = inputStream.readUTF(); // Reads first message sent from server. This first message is
-                                                         // the
-                                                         // allMessages variable, which contains all previous messages
-                                                         // communicated
+                String firstMsg = inputStream.readUTF(); // Reads first message sent from server. This first message is the
+                                                         // allMessages variable, which contains all previous messages communicated
                                                          // since start of server
                 System.out.println(firstMsg); // For debugging purposes
                 // This method call ensures the GUI gets updated with the received message on
@@ -112,8 +110,7 @@ public class TestClient {
                 EventQueue.invokeLater(new Runnable() {
                     public void run() {
                         gui.groupChat.append(firstMsg + "\n");
-                        gui.groupChat.append("You entered the chat on " + CLIENT_JOIN_TIME + ".\n"); // Displays the
-                                                                                                     // time of a client
+                        gui.groupChat.append("You entered the chat on " + CLIENT_JOIN_TIME + ".\n"); // Displays the time of a client
                                                                                                      // connection
                     }
                 });

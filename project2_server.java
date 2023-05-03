@@ -19,7 +19,7 @@ class Server {
 
     public static void main(String[] args) {
         try {
-            serverSocket = new ClientServerSocket(port); // Initializes the server socket with the port number
+            serverSocket = new ServerSocket(port); // Initializes the server socket with the port number
             System.out.println("Server started at " + SERVER_START_TIME + '\n'); // For debugging purposes
 
             // This infinite loop ensures the server will constantly handle new connections from new clients
@@ -29,9 +29,7 @@ class Server {
                 Socket socket = serverSocket.accept(); // Blocks main thread until a new connection is receivec
                 ClientHandler client = new ClientHandler(socket); // Creates a new thread for each client that handles receiving 
                                                                   //messages from said client
-                if( client.getSocket() instanceof ClientSocket) {
-                    System.out.println("Success!");
-                }
+                
                 client.start();
                 clients.add(client); // Adds client thread to collection that maintains list of all active messages
             }

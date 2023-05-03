@@ -33,7 +33,7 @@ public class TestServer {
                 }
             }
         } catch (IOException ioException) {
-            System.err.println(ioException);
+            System.out.println("Error creating server");
         } catch (ClassNotFoundException classNotFoundException) {
             System.out.println("Could not get username");
         } catch (IllegalArgumentException illegalArgumentException) {
