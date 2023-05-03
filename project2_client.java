@@ -23,7 +23,7 @@ class Client {
     public static void main(String[] args) {
         try {
             // create a socket to make connection to server socket
-            sock = new Socket("127.0.0.1", port);
+            sock = new ClientSocket(username,"127.0.0.1", port);
 
             // create an output stream to send data to the server for a client
             outputToServer = new DataOutputStream(sock.getOutputStream());
